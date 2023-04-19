@@ -1,7 +1,7 @@
-import serial
+##import serial
 import time
 
-ser = serial.Serial('COM5',74880)
+##ser = serial.Serial('COM5',74880)
 
 """
    * Serial command format: Two consecutive bytes containing x,y coordinates and dot polarity (on/off.)
@@ -22,9 +22,10 @@ def flip(col, row, pol):
     cmdl |= (row & 0x0F)
 
     cmdh = (1<<7) | (col & 0x7F)
-
-    ser.write(bytes([cmdh]))
-    ser.write(bytes([cmdl]))
+    
+    # print(pol)
+   ## ser.write(bytes([cmdh]))
+   ## ser.write(bytes([cmdl]))
     
 
 mybitmap = []
@@ -38,37 +39,45 @@ mybitmap = []
 
 # read the pixel data of the bitmap file
 for oops in [2]:
-    while True:
-        for xoffset in range(112):
-            with open('pixelbar-open-day.bmp', 'rb') as f:
-                # read the header information of the bitmap file
-                f.seek(10)
-                offset = int.from_bytes(f.read(4), byteorder='little')
-                f.seek(18)
-                width = int.from_bytes(f.read(4), byteorder='little')
-                height = int.from_bytes(f.read(4), byteorder='little')
-                f.seek(28)
-                num_colors = int.from_bytes(f.read(4), byteorder='little')
-                if num_colors == 0:
-                    num_colors = 2
-                
-                #print("oops = ", oops)
-                f.seek(offset)
-                padding = (4 - ((width * 1) % 4)) % 4
+# oops = 1    
+# while True:
+# for xoffset in range(112):
+    with open('pixelbar-open-day.bmp', 'rb') as f:
+        # read the header information of the bitmap file
+        f.seek(10)
+        offset = int.from_bytes(f.read(4), byteorder='little')
+        f.seek(18)
+        width = int.from_bytes(f.read(4), byteorder='little')
+        height = int.from_bytes(f.read(4), byteorder='little')
+        f.seek(28)
+        num_colors = int.from_bytes(f.read(4), byteorder='little')
+        if num_colors == 0:
+            num_colors = 2
+        
+        #print("oops = ", oops)
+        f.seek(offset)
+        padding = (4 - ((width * 1) % 4)) % 4
 
-                
+        
+        print("{",end='')
+        for y in range(height):
+            # y = height - y
+            print("{",end='')
+            for x in range(width // 8):
+                b = int.from_bytes(f.read(1), byteorder='little')
+                print("0b",end='')
+                for i in range(8):
+                    if x * 8 + i >= width:
+                        break
+                    pixel = (b >> (7-i)) & 1
+                    print("1" if pixel else "0",end='')
+                    #flip((width - 1 - (x * 8 + i) + xoffset) % width,height - 1 - y,0 if pixel else 1)
+                    #time.sleep(0.0001)
+                if x < 13: print(",",end='')# print(b)
+            print("}",end='') 
+            if y < 15: print(",",end='')    
+            print('')
+            f.seek(padding + oops, 1)
+        print("}",end='')
+    # time.sleep(0.062)
 
-                for y in range(height):
-                    for x in range(width // 8):
-                        b = int.from_bytes(f.read(1), byteorder='little')
-                        #print(b)
-                        for i in range(8):
-                            if x * 8 + i >= width:
-                                break
-                            pixel = (b >> (7-i)) & 1
-                            #print("X" if pixel else "_",end='')
-                            flip((width - 1 - (x * 8 + i) + xoffset) % width,height - 1 - y,0 if pixel else 1)
-                            #time.sleep(0.0001)
-                    #print('')
-                    f.seek(padding + oops, 1)
-            time.sleep(0.062)
